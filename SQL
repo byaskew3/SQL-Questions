@@ -1,0 +1,233 @@
+-- DQL is made up of different SELECT statements
+-- when we write SQL, queries are separeted by semicolons ;
+-- clauses aka sections of a query are separated on different lines
+-- and keywords are written in ALL CAPS aka you can write selcet however it is standard practice to write SELECT
+
+-- SELECT <column names or * for all>
+-- FROM <table>
+
+SELECT *
+FROM actor;
+
+SELECT *
+FROM film;
+
+-- Select specific colums - movie title and description
+SELECT title, description
+FROM film;
+
+-- WHERE clause
+-- Lets us modify our select statement/query to only include data matching our specifications
+SELECT title, description
+FROM film
+WHERE title LIKE 'Airport Pollock';
+
+-- WITH A WHERE clause, LIKE is not dissimilar to python's **
+-- WHERE <column name> LIKE <value>
+-- also we have the _ and % operators which are wildcards
+-- _ can be any single character
+-- % can be any number of characters
+SELECT title, description, release_year
+FROM film
+WHERE title LIKE '%Airport%';
+
+SELECT *
+FROM actor
+WHERE first_name LIKE 'N%';
+
+-- Where do I see the entire table?
+-- Just query it
+SELECT *
+FROM film;
+
+SELECT *
+FROM actor;
+
+SELECT *
+FROM customer;
+
+SELECT *
+FROM payment;
+
+-- Comparison Operators
+-- Greater than and less than > <
+-- >= and <=
+-- not equal <> (similar to NOT LIKE but for numebers)
+SELECT *
+FROM actor
+WHERE first_name NOT LIKE '%n%'; -- note that this is case sensitive
+
+-- the customer_ids of people who payed more the $2
+-- you do not have to select the column that you are querying by (aka below when we select rows based on the amount being greater than 2 we actually aren't choosing to show that amount (not selecting it))
+SELECT customer_id, amount
+FROM payment
+WHERE amount > 2;
+
+-- lets see more expensive transactions
+SELECT *
+FROM payment
+WHERE amount >= 9.99;
+
+-- maybe I want to sort the transactions by their amount
+-- I can use an ORDER BY clause
+SELECT *
+FROM payment
+WHERE amount >= 9.99
+ORDER BY amount ASC; -- ORDER BY defaults to ascending(ASC) - you can pick by using the ASC or DESC keywords
+
+-- AND OR and BETWEEN keywords
+-- AND/OR let us build larger queries specifying multiple condtions
+-- BETWEEN lets us specify a value BETWEEN two other values
+SELECT *
+FROM payment
+WHERE amount BETWEEN 2 AND 9.99
+ORDER BY payment_date; -- ordering by a timestamp works just fine, will get earliest dates first by default
+
+-- what if I want the amounts less than 2 and greater than 9.99?
+-- use OR
+SELECT *
+FROM payment
+WHERE amount < 2 OR amount >= 9.99
+ORDER BY payment_date;
+
+-- Select all columns and rows from actor where the name doesn't have a lowercase n or an uppercase N
+SELECT *
+FROM actor
+WHERE first_name NOT LIKE '%n%' AND first_name NOT LIKE '%N%';
+
+-- <> is not equals
+-- <> is the numeric type equivalent to NOT LIKE
+-- query all payments that have amount not equal to 0
+-- LIKE is for strings/varchars, math operators for numerical types
+SELECT * 
+FROM payment
+WHERE amount = 0;
+
+-- what if I want to write a query to specifically give me back the number of transactions of a ceratin amount
+-- welcome to AGGREGATES!
+-- aggregates are functions in SQL that let us gorup data together from multiple rows into one 'answer' row
+
+-- SQL aggregates -> SUM(), AVE(), COUNT(), MIN(), MAX()
+-- count()
+SELECT COUNT(amount)
+FROM payment
+WHERE amount = 0;
+
+-- how many payments are there of amount 7.99
+SELECT COUNT(amount)
+FROM payment
+WHERE amount = 7.99;
+
+-- Did we make more money from payments below our average payment or above our average payment
+-- What is average payment? (and I can alias the answer column name)
+SELECT AVG(amount) AS average_payment
+FROM payment;
+-- 4.20 is the average payment
+
+-- Sum of expensive payments:
+SELECT SUM(amount) AS expensive_payments
+FROM payment
+WHERE amount > 4.2;
+-- $43,822.43 made from expensive payments
+
+--SUm of cheap payments:
+SELECT SUM(amount) AS cheap_payments
+FROM payment
+WHERE amount <= 4.2;
+-- $17,489.61 made from cheap payments
+
+-- We did make more than double the money from payments above our average payment amount.
+
+-- How many prices above average do we offer?
+-- I can use the DISTINCT keyword
+SELECT DISTINCT amount
+FROM payment
+WHERE amount > 4.2;
+
+-- GROUPBY works with an aggregate to allow us to display other data alongside our aggregate result
+-- show me how many transactions there are for each payment amount
+SELECT amount, COUNT(amount) AS number_of_payments
+FROM payment
+GROUP BY amount
+ORDER BY COUNT(amount) DESC;
+
+-- query to display the customers who spent the most money
+SELECT customer_id, SUM(amount)
+FROM payment
+GROUP BY customer_id
+ORDER BY SUM(amount) DESC;
+
+-- not allowed to use an aggregate in a where clause
+SELECT payment.customer_id, first_name, last_name, SUM(amount)
+FROM customer
+JOIN payment ON customer.customer_id = payment.customer_id
+GROUP BY payment.customer_id, first_name, last_name
+ORDER BY SUM(amount) DESC;
+
+
+
+-- -------------WEEK 4 Monday Questions Homework---------------------
+
+-- QUESTION 1: How many actors are there with the last name ‘Wahlberg’?
+SELECT *
+FROM actor
+WHERE last_name LIKE 'Wahlberg';
+-- ANSWER: 2
+
+-- QUESTION 2: How many payments were made between $3.99 and $5.99?
+SELECT COUNT(amount)
+FROM payment
+WHERE amount >= 3.99 AND amount <= 5.99; 
+-- ANSWER: 5,607
+
+-- QUESTION 3: What film does the store have the most of? (search in inventory)************
+SELECT *
+FROM inventory
+ORDER BY inventory_id DESC;
+-- ANSWER: There are multiple 1000 film_ids.
+
+-- QUESTION 4: How many customers have the last name ‘William’?
+SELECT *
+FROM customer
+WHERE last_name LIKE 'William';
+-- ANSWER: 0
+
+-- QUESTION 5: What store employee (get the id) sold the most rentals?
+SELECT COUNT (staff_id)
+FROM rental
+GROUP BY staff_id;
+-- ANSWER: staff_id1 sold 8040 rentals.
+
+-- QUESTION 6: How many different district names are there?
+SELECT COUNT (DISTINCT district)
+FROM address;
+-- ANSWER: 378 Districts Names
+
+-- QUESTION 7: What film has the most actors in it? (use film_actor table and get film_id)?
+SELECT film_id, actor_id
+FROM film_actor
+ORDER BY actor_id DESC;
+-- ANSWER: There are 20 film_id's with 200 actors: 993, 958, 945, 912, 879, 714, 544, 538, 537, 474, 465, 462, 419, 346, 149, 121, 116, 80, 49, & 5
+
+-- QUESTION 8: From store_id 1, how many customers have a last name ending with ‘es’? (use customer table)
+SELECT last_name, store_id
+FROM customer
+WHERE last_name LIKE '%es'
+ORDER BY store_id;
+--ANSWER: 13
+
+-- QUESTION 9: How many payment amounts (4.99, 5.99, etc.) had a number of rentals above 250 for customers with ids between 380 and 430? (use group by and having > 250)
+SELECT amount, COUNT(amount) AS number_of_payments
+FROM payment
+WHERE customer_id >= 380 AND customer_id <= 430
+GROUP BY amount
+ORDER BY COUNT(amount) DESC;
+-- ANSWER: 3: 2.99(290), 4.99(281), 0.99(269)
+
+-- QUESTION 10: Within the film table, how many rating categories are there? And what rating has the most movies total?
+SELECT COUNT (DISTINCT rating)
+FROM film
+-- ANSWER A: There are 5 different ratings.
+SELECT MAX(rating)
+FROM film
+-- ANSWER B: NC-17 has the most movies.
